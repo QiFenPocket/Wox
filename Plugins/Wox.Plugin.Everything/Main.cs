@@ -142,6 +142,21 @@ namespace Wox.Plugin.Everything
             return defaultContextMenus;
         }
 
+        private List<ContextMenu> GetDefaultFolderContextMenu()
+        {
+            var cliPath = string.IsNullOrEmpty(_settings.CLIPath) ? "cmd.exe" : _settings.CLIPath;
+
+            var openWithCliContextMenu = new ContextMenu
+            {
+                Name = string.Format(_context.API.GetTranslation("wox_plugin_everything_open_with_cli"), Path.GetFileNameWithoutExtension(cliPath)),
+                Command = cliPath,
+                Argument = " \"{path}\"",
+                ImagePath = cliPath
+            };
+
+            return new List<ContextMenu> { openWithCliContextMenu };
+        }
+
         public void Init(PluginInitContext context)
         {
             _context = context;
@@ -182,33 +197,39 @@ namespace Wox.Plugin.Everything
 
             List<ContextMenu> availableContextMenus = new List<ContextMenu>();
             availableContextMenus.AddRange(GetDefaultContextMenu());
-            availableContextMenus.AddRange(_settings.ContextMenus);
 
-            if (record.Type == ResultType.File)
+            switch (record.Type)
             {
-                foreach (ContextMenu contextMenu in availableContextMenus)
+                case ResultType.File:
+                    availableContextMenus.AddRange(_settings.ContextMenus);
+                    break;
+                case ResultType.Folder:
+                    availableContextMenus.AddRange(GetDefaultFolderContextMenu());
+                    break;
+            }
+
+            foreach (ContextMenu contextMenu in availableContextMenus)
+            {
+                var menu = contextMenu;
+                contextMenus.Add(new Result
                 {
-                    var menu = contextMenu;
-                    contextMenus.Add(new Result
+                    Title = contextMenu.Name,
+                    Action = _ =>
                     {
-                        Title = contextMenu.Name,
-                        Action = _ =>
+                        string argument = menu.Argument.Replace("{path}", record.FullPath);
+                        try
                         {
-                            string argument = menu.Argument.Replace("{path}", record.FullPath);
-                            try
-                            {
-                                Process.Start(menu.Command, argument);
-                            }
-                            catch
-                            {
-                                _context.API.ShowMsg(string.Format(_context.API.GetTranslation("wox_plugin_everything_canot_start"), record.FullPath), string.Empty, string.Empty);
-                                return false;
-                            }
-                            return true;
-                        },
-                        IcoPath = contextMenu.ImagePath
-                    });
-                }
+                            Process.Start(menu.Command, argument);
+                        }
+                        catch
+                        {
+                            _context.API.ShowMsg(string.Format(_context.API.GetTranslation("wox_plugin_everything_canot_start"), record.FullPath), string.Empty, string.Empty);
+                            return false;
+                        }
+                        return true;
+                    },
+                    IcoPath = contextMenu.ImagePath
+                });
             }
 
             var icoPath = (record.Type == ResultType.File) ? "Images\\file.png" : "Images\\folder.png";

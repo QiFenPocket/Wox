@@ -14,6 +14,7 @@ namespace Wox.Plugin.Everything
         public int MaxSearchCount { get; set; } = 100;
 
         public bool UseLocationAsWorkingDir { get; set; } = false;
+        public string CLIPath { get; set; }
     }
 
     public class ContextMenu

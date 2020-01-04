@@ -45,5 +45,20 @@ namespace Wox.Plugin.Everything
 
             EditorPath.Content = _settings.EditorPath;
         }
+
+        private void OpenCLIPath_OnClickPath_Clicked(object sender, RoutedEventArgs e)
+        {
+            OpenFileDialog openFileDialog = new OpenFileDialog();
+            openFileDialog.Filter = "Executable File(*.exe)| *.exe";
+            if (!string.IsNullOrEmpty(_settings.CLIPath))
+                openFileDialog.InitialDirectory = System.IO.Path.GetDirectoryName(_settings.CLIPath);
+
+            if (openFileDialog.ShowDialog() == true)
+            {
+                _settings.CLIPath = openFileDialog.FileName;
+            }
+
+            CLIPath.Content = _settings.CLIPath;
+        }
     }
 }
